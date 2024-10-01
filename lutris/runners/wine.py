@@ -735,6 +735,7 @@ class wine(Runner):
         """Return the path to the Wine executable.
         A specific version can be specified if needed.
         """
+        logger.info("get_executable version: %s", version)
         if version is None:
             version = self.read_version_from_config()
         if version == proton.GE_PROTON_LATEST:
@@ -742,11 +743,14 @@ class wine(Runner):
 
         try:
             wine_path = self.get_path_for_version(version)
+            logger.info("get_executable path: %s", wine_path)
+
             if system.path_exists(wine_path):
                 return wine_path
-        except MissingExecutableError:
+        except MissingExecutableError as ex:
             if not fallback:
                 raise
+            logger.exception("Missing exe: %s", ex)
 
         if not fallback:
             raise MissingExecutableError(_("The Wine executable at '%s' is missing.") % wine_path)
@@ -754,6 +758,7 @@ class wine(Runner):
         # Fallback to default version
         default_version = get_default_wine_version()
         wine_path = self.get_path_for_version(default_version)
+        logger.info("get_executable path2: %s", wine_path)
         if not system.path_exists(wine_path):
             raise MissingExecutableError(_("The Wine executable at '%s' is missing.") % wine_path)
 
@@ -778,7 +783,8 @@ class wine(Runner):
                 return True
 
             return bool(get_installed_wine_versions())
-        except MisconfigurationError:
+        except MisconfigurationError as ex:
+            logger.exception("Misconfig is_installed: %s", ex)
             return False
 
     def is_installed_for(self, interpreter):
